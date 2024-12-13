@@ -1,32 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const options = @import("tracy-options");
-const c = @cImport({
-    if (options.tracy_enable) @cDefine("TRACY_ENABLE", {});
-    if (options.tracy_on_demand) @cDefine("TRACY_ON_DEMAND", {});
-    if (options.tracy_callstack) |depth| @cDefine("TRACY_CALLSTACK", "\"" ++ digits2(depth) ++ "\"");
-    if (options.tracy_no_callstack) @cDefine("TRACY_NO_CALLSTACK", {});
-    if (options.tracy_no_callstack_inlines) @cDefine("TRACY_NO_CALLSTACK_INLINES", {});
-    if (options.tracy_only_localhost) @cDefine("TRACY_ONLY_LOCALHOST", {});
-    if (options.tracy_no_broadcast) @cDefine("TRACY_NO_BROADCAST", {});
-    if (options.tracy_only_ipv4) @cDefine("TRACY_ONLY_IPV4", {});
-    if (options.tracy_no_code_transfer) @cDefine("TRACY_NO_CODE_TRANSFER", {});
-    if (options.tracy_no_context_switch) @cDefine("TRACY_NO_CONTEXT_SWITCH", {});
-    if (options.tracy_no_exit) @cDefine("TRACY_NO_EXIT", {});
-    if (options.tracy_no_sampling) @cDefine("TRACY_NO_SAMPLING", {});
-    if (options.tracy_no_verify) @cDefine("TRACY_NO_VERIFY", {});
-    if (options.tracy_no_vsync_capture) @cDefine("TRACY_NO_VSYNC_CAPTURE", {});
-    if (options.tracy_no_frame_image) @cDefine("TRACY_NO_FRAME_IMAGE", {});
-    if (options.tracy_no_system_tracing) @cDefine("TRACY_NO_SYSTEM_TRACING", {});
-    if (options.tracy_delayed_init) @cDefine("TRACY_DELAYED_INIT", {});
-    if (options.tracy_manual_lifetime) @cDefine("TRACY_MANUAL_LIFETIME", {});
-    if (options.tracy_fibers) @cDefine("TRACY_FIBERS", {});
-    if (options.tracy_no_crash_handler) @cDefine("TRACY_NO_CRASH_HANDLER", {});
-    if (options.tracy_timer_fallback) @cDefine("TRACY_TIMER_FALLBACK", {});
-    if (options.shared and builtin.os.tag == .windows) @cDefine("TRACY_IMPORTS", {});
-
-    @cInclude("tracy/TracyC.h");
-});
+const c = @import("c");
 
 pub inline fn setThreadName(comptime name: [:0]const u8) void {
     if (!options.tracy_enable) return;
@@ -86,7 +61,7 @@ pub const ZoneOptions = struct {
     color: ?u32 = null,
 };
 
-const ZoneContext = if (options.tracy_enable) extern struct {
+pub const ZoneContext = if (options.tracy_enable) extern struct {
     ctx: c.___tracy_c_zone_context,
 
     pub inline fn deinit(zone: *const ZoneContext) void {
@@ -121,12 +96,13 @@ const ZoneContext = if (options.tracy_enable) extern struct {
     pub inline fn value(_: *const ZoneContext, _: u64) void {}
 };
 
+pub const TracySourceLocationData = c.___tracy_source_location_data;
+
 pub inline fn initZone(comptime src: std.builtin.SourceLocation, comptime opts: ZoneOptions) ZoneContext {
     if (!options.tracy_enable) return .{};
-    const active: c_int = @intFromBool(opts.active);
 
     const static = struct {
-        var src_loc = c.___tracy_source_location_data{
+        var src_loc = TracySourceLocationData {
             .name = if (opts.name) |name| name.ptr else null,
             .function = src.fn_name.ptr,
             .file = src.file,
@@ -135,19 +111,25 @@ pub inline fn initZone(comptime src: std.builtin.SourceLocation, comptime opts: 
         };
     };
 
+    return initZoneRaw(&static.src_loc, opts.active);
+}
+
+pub inline fn initZoneRaw(src_loc: *const TracySourceLocationData, b_active: bool) ZoneContext {
+    if (!options.tracy_enable) return .{};
+    const active: c_int = @intFromBool(b_active);
+
     if (!options.tracy_no_callstack) {
         if (options.tracy_callstack) |depth| {
             return .{
-                .ctx = c.___tracy_emit_zone_begin_callstack(&static.src_loc, depth, active),
+                .ctx = c.___tracy_emit_zone_begin_callstack(src_loc, depth, active),
             };
         }
     }
 
     return .{
-        .ctx = c.___tracy_emit_zone_begin(&static.src_loc, active),
+        .ctx = c.___tracy_emit_zone_begin(src_loc, active),
     };
 }
-
 pub inline fn plot(comptime T: type, comptime name: [:0]const u8, value: T) void {
     if (!options.tracy_enable) return;
 

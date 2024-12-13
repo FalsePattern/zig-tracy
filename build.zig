@@ -28,6 +28,37 @@ pub fn build(b: *std.Build) void {
     const tracy_timer_fallback = b.option(bool, "tracy_timer_fallback", "Use lower resolution timers") orelse false;
     const shared = b.option(bool, "shared", "Build the tracy client as a shared libary") orelse false;
 
+    const tracy_src = b.dependency("tracy_src", .{});
+
+    const c = b.addTranslateC(.{
+        .root_source_file = tracy_src.path("public/tracy/TracyC.h"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    if (tracy_enable) c.defineCMacro("TRACY_ENABLE", "");
+    if (tracy_on_demand) c.defineCMacro("TRACY_ON_DEMAND", "");
+    if (tracy_callstack) |depth| c.defineCMacro("TRACY_CALLSTACK", "\"" ++ digits2(depth) ++ "\"");
+    if (tracy_no_callstack) c.defineCMacro("TRACY_NO_CALLSTACK", "");
+    if (tracy_no_callstack_inlines) c.defineCMacro("TRACY_NO_CALLSTACK_INLINES", "");
+    if (tracy_only_localhost) c.defineCMacro("TRACY_ONLY_LOCALHOST", "");
+    if (tracy_no_broadcast) c.defineCMacro("TRACY_NO_BROADCAST", "");
+    if (tracy_only_ipv4) c.defineCMacro("TRACY_ONLY_IPV4", "");
+    if (tracy_no_code_transfer) c.defineCMacro("TRACY_NO_CODE_TRANSFER", "");
+    if (tracy_no_context_switch) c.defineCMacro("TRACY_NO_CONTEXT_SWITCH", "");
+    if (tracy_no_exit) c.defineCMacro("TRACY_NO_EXIT", "");
+    if (tracy_no_sampling) c.defineCMacro("TRACY_NO_SAMPLING", "");
+    if (tracy_no_verify) c.defineCMacro("TRACY_NO_VERIFY", "");
+    if (tracy_no_vsync_capture) c.defineCMacro("TRACY_NO_VSYNC_CAPTURE", "");
+    if (tracy_no_frame_image) c.defineCMacro("TRACY_NO_FRAME_IMAGE", "");
+    if (tracy_no_system_tracing) c.defineCMacro("TRACY_NO_SYSTEM_TRACING", "");
+    if (tracy_delayed_init) c.defineCMacro("TRACY_DELAYED_INIT", "");
+    if (tracy_manual_lifetime) c.defineCMacro("TRACY_MANUAL_LIFETIME", "");
+    if (tracy_fibers) c.defineCMacro("TRACY_FIBERS", "");
+    if (tracy_no_crash_handler) c.defineCMacro("TRACY_NO_CRASH_HANDLER", "");
+    if (tracy_timer_fallback) c.defineCMacro("TRACY_TIMER_FALLBACK", "");
+    if (shared and target.result.os.tag == .windows) c.defineCMacro("TRACY_IMPORTS", "");
+
     const options = b.addOptions();
     options.addOption(bool, "tracy_enable", tracy_enable);
     options.addOption(bool, "tracy_on_demand", tracy_on_demand);
@@ -62,7 +93,7 @@ pub fn build(b: *std.Build) void {
         },
     });
 
-    tracy_module.addIncludePath(b.path("./tracy/public"));
+    tracy_module.addImport("c", c.createModule());
 
     const tracy_client = if (shared) b.addSharedLibrary(.{
         .name = "tracy",
@@ -80,12 +111,12 @@ pub fn build(b: *std.Build) void {
     }
     tracy_client.linkLibCpp();
     tracy_client.addCSourceFile(.{
-        .file = b.path("./tracy/public/TracyClient.cpp"),
+        .file = tracy_src.path("public/TracyClient.cpp"),
         .flags = &.{},
     });
     inline for (tracy_header_files) |header| {
         tracy_client.installHeader(
-            b.path("./tracy/" ++ header[0]),
+            tracy_src.path(header[0]),
             header[1],
         );
     }
