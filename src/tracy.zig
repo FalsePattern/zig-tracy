@@ -226,11 +226,11 @@ pub inline fn printAppInfo(comptime fmt: []const u8, args: anytype) void {
     c.___tracy_emit_message_appinfo(written.ptr, written.len);
 }
 
-pub inline fn allocSrcLoc(line: u32, source: [:0]const u8, function: [:0]const u8, oName: ?[:0]const u8) u64 {
+pub inline fn allocSrcLoc(line: u32, source: [:0]const u8, function: [:0]const u8, oName: ?[:0]const u8, color: u32) u64 {
     return if (oName) |name| {
-        c.___tracy_alloc_srcloc_name(line, source, source.len, function, function.len, name, name.len);
+        c.___tracy_alloc_srcloc_name(line, source, source.len, function, function.len, name, name.len, color);
     } else {
-        c.___tracy_alloc_srcloc(line, source, source.len, function, function.len);
+        c.___tracy_alloc_srcloc(line, source, source.len, function, function.len, color);
     };
 }
 
