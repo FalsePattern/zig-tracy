@@ -2,46 +2,30 @@
   description = "zig-tracy development environment";
 
   inputs = {
-    zig-source = {
-      url = "https://ziglang.org/builds/zig-linux-x86_64-0.14.0-dev.2639+15fe99957.tar.xz";
-      flake = false;
-    };
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    zig-overlay.url = "github:mitchellh/zig-overlay";
+    zig-overlay.inputs.nixpkgs.follows = "nixpkgs";
+
+    zls-flake.url = "github:zigtools/zls";
+    zls-flake.inputs.nixpkgs.follows = "nixpkgs";
+
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    zig-source
-  }:
-  let
-    default_system = "x86_64-linux";
-    pkgs = nixpkgs.legacyPackages.${default_system};
-    zig_0_14_0_rc = pkgs.stdenv.mkDerivation rec {
-      pname = "zig";
-      version = "0.14.0-dev.2639+15fe99957";
-      src = zig-source.outPath;
-
-      installPhase = ''
-        mkdir -p "$out/bin"
-        cp zig "$out/bin"
-        cp -r lib "$out"
-        cp -r doc "$out"
-      '';
-
-      meta = with pkgs.lib; {
-        homepage = "https://ziglang.org/";
-        description = "General-purpose programming language and toolchain for maintaining robust, optimal, and reusable software";
-        license = licenses.mit;
-        platforms = platforms.unix;
-      };
-    };
-  in {
-    devShell.${default_system} = pkgs.mkShell {
-      nativeBuildInputs = [
-        zig_0_14_0_rc
-        pkgs.lldb_16
-      ];
-    };
-  };
+  outputs = { self, nixpkgs, zig-overlay, flake-utils, zls-flake }:
+  flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+        zls = zls-flake.packages.${system}.zls;
+        zig = zig-overlay.packages.${system}.master-2025-01-12;
+      in {
+        devShells.default = pkgs.mkShell {
+          nativeBuildInputs = [
+            zig
+            zls
+            pkgs.lldb_16
+          ];
+        };
+      });
 }
 
