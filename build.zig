@@ -120,7 +120,7 @@ pub fn build(b: *std.Build) void {
             header[1],
         );
     }
-    const tracy_client_module = tracy_client.root_module;
+    var tracy_client_module = tracy_client.root_module;
     if (tracy_enable)
         tracy_client_module.addCMacro("TRACY_ENABLE", "");
     if (tracy_on_demand)
