@@ -3,7 +3,7 @@
 
   inputs = {
     zig-source = {
-      url = "https://ziglang.org/builds/zig-linux-x86_64-0.14.0-dev.2435+7575f2121.tar.xz";
+      url = "https://ziglang.org/builds/zig-linux-x86_64-0.14.0-dev.2639+15fe99957.tar.xz";
       flake = false;
     };
   };
@@ -18,7 +18,7 @@
     pkgs = nixpkgs.legacyPackages.${default_system};
     zig_0_14_0_rc = pkgs.stdenv.mkDerivation rec {
       pname = "zig";
-      version = "0.14.0-dev.2435+7575f2121";
+      version = "0.14.0-dev.2639+15fe99957";
       src = zig-source.outPath;
 
       installPhase = ''
