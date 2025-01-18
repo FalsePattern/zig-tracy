@@ -179,12 +179,20 @@ pub inline fn plotConfig(comptime name: [:0]const u8, comptime config: PlotConfi
 }
 
 pub inline fn message(comptime msg: [:0]const u8) void {
+    messageRaw(msg);
+}
+
+pub inline fn messageRaw(msg: [:0]const u8) void {
     if (!options.tracy_enable) return;
     const depth = options.tracy_callstack orelse 0;
     c.___tracy_emit_messageL(msg, depth);
 }
 
 pub inline fn messageColor(comptime msg: [:0]const u8, color: u32) void {
+    messageColorRaw(msg, color);
+}
+
+pub inline fn messageColorRaw(msg: [:0]const u8, color: u32) void {
     if (!options.tracy_enable) return;
     const depth = options.tracy_callstack orelse 0;
     c.___tracy_emit_messageLC(msg, color, depth);
