@@ -90,25 +90,21 @@ pub fn build(b: *std.Build) void {
     options.addOption(bool, "shared", shared);
 
     const tracy_module = b.addModule("tracy", .{
-        .root_source_file = b.path("./src/tracy.zig"),
-        .imports = &.{
-            .{
-                .name = "tracy-options",
-                .module = options.createModule(),
-            },
-        },
+        .root_source_file = b.path("src/tracy.zig"),
+        .target = target,
+        .optimize = optimize,
     });
 
+    tracy_module.addImport("tracy-options", options.createModule());
     tracy_module.addImport("c", c.createModule());
 
-    const tracy_client = if (shared) b.addSharedLibrary(.{
+    const tracy_client = if (shared) b.addLibrary(.{
+        .linkage = if (shared) .dynamic else .static,
         .name = "tracy",
-        .target = target,
-        .optimize = client_optimize,
-    }) else b.addStaticLibrary(.{
-        .name = "tracy",
-        .target = target,
-        .optimize = client_optimize,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = client_optimize,
+        }),
     });
 
     if (target.result.os.tag == .windows) {
