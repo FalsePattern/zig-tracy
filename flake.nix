@@ -17,7 +17,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         zls = zls-flake.packages.${system}.zls;
-        zig = zig-overlay.packages.${system}.master-2025-01-12;
+        zig = zig-overlay.packages.${system}.master-2025-02-14;
       in {
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = [

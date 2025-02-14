@@ -358,6 +358,7 @@ pub const TracingAllocator = struct {
             .vtable = &.{
                 .alloc = alloc,
                 .resize = resize,
+                .remap = remap,
                 .free = free,
             },
         };
@@ -366,12 +367,14 @@ pub const TracingAllocator = struct {
     fn alloc(
         ctx: *anyopaque,
         len: usize,
-        ptr_align: u8,
+        alignment: std.mem.Alignment,
         ret_addr: usize,
     ) ?[*]u8 {
         const self: *Self = @ptrCast(@alignCast(ctx));
-        const result = self.parent_allocator.rawAlloc(len, ptr_align, ret_addr);
+        const result = self.parent_allocator.rawAlloc(len, alignment, ret_addr);
         if (!options.tracy_enable) return result;
+
+        if (result == null) return null;
 
         if (self.pool_name) |name| {
             c.___tracy_emit_memory_alloc_named(result, len, 0, name.ptr);
@@ -384,45 +387,69 @@ pub const TracingAllocator = struct {
 
     fn resize(
         ctx: *anyopaque,
-        buf: []u8,
-        buf_align: u8,
+        memory: []u8,
+        alignment: std.mem.Alignment,
         new_len: usize,
         ret_addr: usize,
     ) bool {
         const self: *Self = @ptrCast(@alignCast(ctx));
-        const result = self.parent_allocator.rawResize(buf, buf_align, new_len, ret_addr);
+        const result = self.parent_allocator.rawResize(memory, alignment, new_len, ret_addr);
+        if (!options.tracy_enable) return result;
+
         if (!result) return false;
 
-        if (!options.tracy_enable) return true;
-
         if (self.pool_name) |name| {
-            c.___tracy_emit_memory_free_named(buf.ptr, 0, name.ptr);
-            c.___tracy_emit_memory_alloc_named(buf.ptr, new_len, 0, name.ptr);
+            c.___tracy_emit_memory_free_named(memory.ptr, 0, name.ptr);
+            c.___tracy_emit_memory_alloc_named(memory.ptr, new_len, 0, name.ptr);
         } else {
-            c.___tracy_emit_memory_free(buf.ptr, 0);
-            c.___tracy_emit_memory_alloc(buf.ptr, new_len, 0);
+            c.___tracy_emit_memory_free(memory.ptr, 0);
+            c.___tracy_emit_memory_alloc(memory.ptr, new_len, 0);
         }
 
-        return true;
+        return result;
+    }
+
+    fn remap(
+        ctx: *anyopaque,
+        memory: []u8,
+        alignment: std.mem.Alignment,
+        new_len: usize,
+        ret_addr: usize,
+    ) ?[*]u8 {
+        const self: *Self = @ptrCast(@alignCast(ctx));
+        const result = self.parent_allocator.rawRemap(memory, alignment, new_len, ret_addr);
+        if (!options.tracy_enable) return result;
+
+        if (result == null) return null;
+
+        if (self.pool_name) |name| {
+            c.___tracy_emit_memory_free_named(memory.ptr, 0, name.ptr);
+            c.___tracy_emit_memory_alloc_named(memory.ptr, new_len, 0, name.ptr);
+        } else {
+            c.___tracy_emit_memory_free(memory.ptr, 0);
+            c.___tracy_emit_memory_alloc(memory.ptr, new_len, 0);
+        }
+
+        return result;
     }
 
     fn free(
         ctx: *anyopaque,
-        buf: []u8,
-        buf_align: u8,
+        memory: []u8,
+        alignment: std.mem.Alignment,
         ret_addr: usize,
     ) void {
         const self: *Self = @ptrCast(@alignCast(ctx));
 
         if (options.tracy_enable) {
             if (self.pool_name) |name| {
-                c.___tracy_emit_memory_free_named(buf.ptr, 0, name.ptr);
+                c.___tracy_emit_memory_free_named(memory.ptr, 0, name.ptr);
             } else {
-                c.___tracy_emit_memory_free(buf.ptr, 0);
+                c.___tracy_emit_memory_free(memory.ptr, 0);
             }
         }
 
-        self.parent_allocator.rawFree(buf, buf_align, ret_addr);
+        self.parent_allocator.rawFree(memory, alignment, ret_addr);
     }
 };
 
