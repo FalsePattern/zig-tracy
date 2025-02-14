@@ -19,14 +19,20 @@ pub fn build(b: *std.Build) void {
     const tracy_no_verify = b.option(bool, "tracy_no_verify", "Disable zone validation for C API") orelse false;
     const tracy_no_vsync_capture = b.option(bool, "tracy_no_vsync_capture", "Disable capture of hardware Vsync events") orelse false;
     const tracy_no_frame_image = b.option(bool, "tracy_no_frame_image", "Disable the frame image support and its thread") orelse false;
-    // NOTE For some reason system tracing on zig projects crashes tracy, will need to investigate
-    const tracy_no_system_tracing = b.option(bool, "tracy_no_system_tracing", "Disable systrace sampling") orelse true;
+    const tracy_no_system_tracing = b.option(bool, "tracy_no_system_tracing", "Disable systrace sampling") orelse false;
     const tracy_delayed_init = b.option(bool, "tracy_delayed_init", "Enable delayed initialization of the library (init on first call)") orelse false;
     const tracy_manual_lifetime = b.option(bool, "tracy_manual_lifetime", "Enable the manual lifetime management of the profile") orelse false;
     const tracy_fibers = b.option(bool, "tracy_fibers", "Enable fibers support") orelse false;
     const tracy_no_crash_handler = b.option(bool, "tracy_no_crash_handler", "Disable crash handling") orelse false;
     const tracy_timer_fallback = b.option(bool, "tracy_timer_fallback", "Use lower resolution timers") orelse false;
     const shared = b.option(bool, "shared", "Build the tracy client as a shared libary") orelse false;
+    // tracy_no_system_tracing = false causes tracy to crash with an illegal instruction internally when compiling with Debug or ReleaseSafe, so the tracy client
+    // will get compiled with ReleaseSmall/ReleaseFast by default if system tracing is turned on.
+    const client_optimize: std.builtin.OptimizeMode = b.option(std.builtin.OptimizeMode, "client_optimize","Optimization mode for the tracy client.")
+        orelse if (tracy_no_system_tracing) optimize else switch (optimize) {
+            .ReleaseSmall => .ReleaseSmall,
+            .Debug, .ReleaseSafe, .ReleaseFast => .ReleaseFast
+        };
 
     const tracy_src = b.dependency("tracy_src", .{});
 
@@ -98,11 +104,11 @@ pub fn build(b: *std.Build) void {
     const tracy_client = if (shared) b.addSharedLibrary(.{
         .name = "tracy",
         .target = target,
-        .optimize = optimize,
+        .optimize = client_optimize,
     }) else b.addStaticLibrary(.{
         .name = "tracy",
         .target = target,
-        .optimize = optimize,
+        .optimize = client_optimize,
     });
 
     if (target.result.os.tag == .windows) {
