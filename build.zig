@@ -28,11 +28,11 @@ pub fn build(b: *std.Build) void {
     const shared = b.option(bool, "shared", "Build the tracy client as a shared libary") orelse false;
     // tracy_no_system_tracing = false causes tracy to crash with an illegal instruction internally when compiling with Debug or ReleaseSafe, so the tracy client
     // will get compiled with ReleaseSmall/ReleaseFast by default if system tracing is turned on.
-    const client_optimize: std.builtin.OptimizeMode = b.option(std.builtin.OptimizeMode, "client_optimize","Optimization mode for the tracy client.")
-        orelse if (tracy_no_system_tracing) optimize else switch (optimize) {
-            .ReleaseSmall => .ReleaseSmall,
-            .Debug, .ReleaseSafe, .ReleaseFast => .ReleaseFast
-        };
+    const client_optimize: std.builtin.OptimizeMode = b.option(std.builtin.OptimizeMode, "client_optimize", "Optimization mode for the tracy client.") orelse
+        if (tracy_no_system_tracing) optimize else switch (optimize) {
+        .ReleaseSmall => .ReleaseSmall,
+        .Debug, .ReleaseSafe, .ReleaseFast => .ReleaseFast,
+    };
 
     const tracy_src = b.dependency("tracy_src", .{});
 
@@ -42,28 +42,28 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    if (tracy_enable) c.defineCMacro("TRACY_ENABLE", "");
-    if (tracy_on_demand) c.defineCMacro("TRACY_ON_DEMAND", "");
+    if (tracy_enable) c.defineCMacro("TRACY_ENABLE", "1");
+    if (tracy_on_demand) c.defineCMacro("TRACY_ON_DEMAND", "1");
     if (tracy_callstack) |depth| c.defineCMacro("TRACY_CALLSTACK", "\"" ++ std.fmt.digits2(depth) ++ "\"");
-    if (tracy_no_callstack) c.defineCMacro("TRACY_NO_CALLSTACK", "");
-    if (tracy_no_callstack_inlines) c.defineCMacro("TRACY_NO_CALLSTACK_INLINES", "");
-    if (tracy_only_localhost) c.defineCMacro("TRACY_ONLY_LOCALHOST", "");
-    if (tracy_no_broadcast) c.defineCMacro("TRACY_NO_BROADCAST", "");
-    if (tracy_only_ipv4) c.defineCMacro("TRACY_ONLY_IPV4", "");
-    if (tracy_no_code_transfer) c.defineCMacro("TRACY_NO_CODE_TRANSFER", "");
-    if (tracy_no_context_switch) c.defineCMacro("TRACY_NO_CONTEXT_SWITCH", "");
-    if (tracy_no_exit) c.defineCMacro("TRACY_NO_EXIT", "");
-    if (tracy_no_sampling) c.defineCMacro("TRACY_NO_SAMPLING", "");
-    if (tracy_no_verify) c.defineCMacro("TRACY_NO_VERIFY", "");
-    if (tracy_no_vsync_capture) c.defineCMacro("TRACY_NO_VSYNC_CAPTURE", "");
-    if (tracy_no_frame_image) c.defineCMacro("TRACY_NO_FRAME_IMAGE", "");
-    if (tracy_no_system_tracing) c.defineCMacro("TRACY_NO_SYSTEM_TRACING", "");
-    if (tracy_delayed_init) c.defineCMacro("TRACY_DELAYED_INIT", "");
-    if (tracy_manual_lifetime) c.defineCMacro("TRACY_MANUAL_LIFETIME", "");
-    if (tracy_fibers) c.defineCMacro("TRACY_FIBERS", "");
-    if (tracy_no_crash_handler) c.defineCMacro("TRACY_NO_CRASH_HANDLER", "");
-    if (tracy_timer_fallback) c.defineCMacro("TRACY_TIMER_FALLBACK", "");
-    if (shared and target.result.os.tag == .windows) c.defineCMacro("TRACY_IMPORTS", "");
+    if (tracy_no_callstack) c.defineCMacro("TRACY_NO_CALLSTACK", "1");
+    if (tracy_no_callstack_inlines) c.defineCMacro("TRACY_NO_CALLSTACK_INLINES", "1");
+    if (tracy_only_localhost) c.defineCMacro("TRACY_ONLY_LOCALHOST", "1");
+    if (tracy_no_broadcast) c.defineCMacro("TRACY_NO_BROADCAST", "1");
+    if (tracy_only_ipv4) c.defineCMacro("TRACY_ONLY_IPV4", "1");
+    if (tracy_no_code_transfer) c.defineCMacro("TRACY_NO_CODE_TRANSFER", "1");
+    if (tracy_no_context_switch) c.defineCMacro("TRACY_NO_CONTEXT_SWITCH", "1");
+    if (tracy_no_exit) c.defineCMacro("TRACY_NO_EXIT", "1");
+    if (tracy_no_sampling) c.defineCMacro("TRACY_NO_SAMPLING", "1");
+    if (tracy_no_verify) c.defineCMacro("TRACY_NO_VERIFY", "1");
+    if (tracy_no_vsync_capture) c.defineCMacro("TRACY_NO_VSYNC_CAPTURE", "1");
+    if (tracy_no_frame_image) c.defineCMacro("TRACY_NO_FRAME_IMAGE", "1");
+    if (tracy_no_system_tracing) c.defineCMacro("TRACY_NO_SYSTEM_TRACING", "1");
+    if (tracy_delayed_init) c.defineCMacro("TRACY_DELAYED_INIT", "1");
+    if (tracy_manual_lifetime) c.defineCMacro("TRACY_MANUAL_LIFETIME", "1");
+    if (tracy_fibers) c.defineCMacro("TRACY_FIBERS", "1");
+    if (tracy_no_crash_handler) c.defineCMacro("TRACY_NO_CRASH_HANDLER", "1");
+    if (tracy_timer_fallback) c.defineCMacro("TRACY_TIMER_FALLBACK", "1");
+    if (shared and target.result.os.tag == .windows) c.defineCMacro("TRACY_IMPORTS", "1");
 
     const options = b.addOptions();
     options.addOption(bool, "tracy_enable", tracy_enable);
@@ -127,51 +127,28 @@ pub fn build(b: *std.Build) void {
         );
     }
     var tracy_client_module = tracy_client.root_module;
-    if (tracy_enable)
-        tracy_client_module.addCMacro("TRACY_ENABLE", "");
-    if (tracy_on_demand)
-        tracy_client_module.addCMacro("TRACY_ON_DEMAND", "");
-    if (tracy_callstack) |depth| {
-        tracy_client_module.addCMacro("TRACY_CALLSTACK", "\"" ++ std.fmt.digits2(depth) ++ "\"");
-    }
-    if (tracy_no_callstack)
-        tracy_client_module.addCMacro("TRACY_NO_CALLSTACK", "");
-    if (tracy_no_callstack_inlines)
-        tracy_client_module.addCMacro("TRACY_NO_CALLSTACK_INLINES", "");
-    if (tracy_only_localhost)
-        tracy_client_module.addCMacro("TRACY_ONLY_LOCALHOST", "");
-    if (tracy_no_broadcast)
-        tracy_client_module.addCMacro("TRACY_NO_BROADCAST", "");
-    if (tracy_only_ipv4)
-        tracy_client_module.addCMacro("TRACY_ONLY_IPV4", "");
-    if (tracy_no_code_transfer)
-        tracy_client_module.addCMacro("TRACY_NO_CODE_TRANSFER", "");
-    if (tracy_no_context_switch)
-        tracy_client_module.addCMacro("TRACY_NO_CONTEXT_SWITCH", "");
-    if (tracy_no_exit)
-        tracy_client_module.addCMacro("TRACY_NO_EXIT", "");
-    if (tracy_no_sampling)
-        tracy_client_module.addCMacro("TRACY_NO_SAMPLING", "");
-    if (tracy_no_verify)
-        tracy_client_module.addCMacro("TRACY_NO_VERIFY", "");
-    if (tracy_no_vsync_capture)
-        tracy_client_module.addCMacro("TRACY_NO_VSYNC_CAPTURE", "");
-    if (tracy_no_frame_image)
-        tracy_client_module.addCMacro("TRACY_NO_FRAME_IMAGE", "");
-    if (tracy_no_system_tracing)
-        tracy_client_module.addCMacro("TRACY_NO_SYSTEM_TRACING", "");
-    if (tracy_delayed_init)
-        tracy_client_module.addCMacro("TRACY_DELAYED_INIT", "");
-    if (tracy_manual_lifetime)
-        tracy_client_module.addCMacro("TRACY_MANUAL_LIFETIME", "");
-    if (tracy_fibers)
-        tracy_client_module.addCMacro("TRACY_FIBERS", "");
-    if (tracy_no_crash_handler)
-        tracy_client_module.addCMacro("TRACY_NO_CRASH_HANDLER", "");
-    if (tracy_timer_fallback)
-        tracy_client_module.addCMacro("TRACY_TIMER_FALLBACK", "");
-    if (shared and target.result.os.tag == .windows)
-        tracy_client_module.addCMacro("TRACY_EXPORTS", "");
+    if (tracy_enable) tracy_client_module.addCMacro("TRACY_ENABLE", "1");
+    if (tracy_on_demand) tracy_client_module.addCMacro("TRACY_ON_DEMAND", "1");
+    if (tracy_callstack) |depth| tracy_client_module.addCMacro("TRACY_CALLSTACK", "\"" ++ std.fmt.digits2(depth) ++ "\"");
+    if (tracy_no_callstack) tracy_client_module.addCMacro("TRACY_NO_CALLSTACK", "1");
+    if (tracy_no_callstack_inlines) tracy_client_module.addCMacro("TRACY_NO_CALLSTACK_INLINES", "1");
+    if (tracy_only_localhost) tracy_client_module.addCMacro("TRACY_ONLY_LOCALHOST", "1");
+    if (tracy_no_broadcast) tracy_client_module.addCMacro("TRACY_NO_BROADCAST", "1");
+    if (tracy_only_ipv4) tracy_client_module.addCMacro("TRACY_ONLY_IPV4", "1");
+    if (tracy_no_code_transfer) tracy_client_module.addCMacro("TRACY_NO_CODE_TRANSFER", "1");
+    if (tracy_no_context_switch) tracy_client_module.addCMacro("TRACY_NO_CONTEXT_SWITCH", "1");
+    if (tracy_no_exit) tracy_client_module.addCMacro("TRACY_NO_EXIT", "1");
+    if (tracy_no_sampling) tracy_client_module.addCMacro("TRACY_NO_SAMPLING", "1");
+    if (tracy_no_verify) tracy_client_module.addCMacro("TRACY_NO_VERIFY", "1");
+    if (tracy_no_vsync_capture) tracy_client_module.addCMacro("TRACY_NO_VSYNC_CAPTURE", "1");
+    if (tracy_no_frame_image) tracy_client_module.addCMacro("TRACY_NO_FRAME_IMAGE", "1");
+    if (tracy_no_system_tracing) tracy_client_module.addCMacro("TRACY_NO_SYSTEM_TRACING", "1");
+    if (tracy_delayed_init) tracy_client_module.addCMacro("TRACY_DELAYED_INIT", "1");
+    if (tracy_manual_lifetime) tracy_client_module.addCMacro("TRACY_MANUAL_LIFETIME", "1");
+    if (tracy_fibers) tracy_client_module.addCMacro("TRACY_FIBERS", "1");
+    if (tracy_no_crash_handler) tracy_client_module.addCMacro("TRACY_NO_CRASH_HANDLER", "1");
+    if (tracy_timer_fallback) tracy_client_module.addCMacro("TRACY_TIMER_FALLBACK", "1");
+    if (shared and target.result.os.tag == .windows) tracy_client_module.addCMacro("TRACY_EXPORTS", "1");
     b.installArtifact(tracy_client);
 }
 
