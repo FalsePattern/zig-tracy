@@ -98,7 +98,7 @@ pub fn build(b: *std.Build) void {
     tracy_module.addImport("tracy-options", options.createModule());
     tracy_module.addImport("c", c.createModule());
 
-    const tracy_client = if (shared) b.addLibrary(.{
+    const tracy_client = b.addLibrary(.{
         .linkage = if (shared) .dynamic else .static,
         .name = "tracy",
         .root_module = b.createModule(.{
