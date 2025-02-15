@@ -44,7 +44,8 @@ pub const LockableContext = if (options.tracy_enable) opaque {
     pub inline fn markRaw(lockable: *LockableContext, src_loc: *const TracySourceLocationData) void {
         c.___tracy_mark_lockable_ctx(@ptrCast(lockable), src_loc);
     }
-    /// name MUST NOT be deallocated
+
+    /// copies `name` internally
     pub inline fn customName(lockable: *LockableContext, name: [:0]const u8) void {
         c.___tracy_custom_name_lockable_ctx(@ptrCast(lockable), name.ptr, name.len);
     }

@@ -26,9 +26,9 @@ pub const plotConfig = _plot.plotConfig;
 
 const msg = @import("message.zig");
 pub const message = msg.message;
-pub const messageRaw = msg.messageRaw;
+pub const messageAlloc = msg.messageAlloc;
 pub const messageColor = msg.messageColor;
-pub const messageColorRaw = msg.messageColorRaw;
+pub const messageColorAlloc = msg.messageColorAlloc;
 pub const print = msg.print;
 pub const printColor = msg.printColor;
 pub const printAppInfo = msg.printAppInfo;

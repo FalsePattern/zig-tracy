@@ -1,7 +1,8 @@
 const c = @import("c");
 const options = @import("tracy-options");
 
-pub inline fn setThreadName(comptime name: [:0]const u8) void {
+/// name MUST NOT be deallocated!
+pub inline fn setThreadName(name: [:0]const u8) void {
     if (!options.tracy_enable) return;
     c.___tracy_set_thread_name(name);
 }

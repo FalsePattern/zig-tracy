@@ -14,16 +14,13 @@ pub inline fn initWithCallstack(comptime callstack: bool, parent_allocator: std.
     };
 }
 
-pub inline fn initNamed(comptime pool_name: [:0]const u8, parent_allocator: std.mem.Allocator) TracingAllocatorInternal(false, true) {
+/// pool_name MUST NOT be deallocated!
+pub inline fn initNamed(pool_name: [:0]const u8, parent_allocator: std.mem.Allocator) TracingAllocatorInternal(false, true) {
     return initNamedWithCallstack(false, pool_name, parent_allocator);
 }
 
-pub inline fn initNamedWithCallstack(comptime callstack: bool, comptime pool_name: [:0]const u8, parent_allocator: std.mem.Allocator) TracingAllocatorInternal(callstack, true) {
-    return initNamedWithCallstackRaw(callstack, pool_name, parent_allocator);
-}
-
 /// pool_name MUST NOT be deallocated!
-pub inline fn initNamedWithCallstackRaw(comptime callstack: bool, pool_name: [:0]const u8, parent_allocator: std.mem.Allocator) TracingAllocatorInternal(callstack, true) {
+pub inline fn initNamedWithCallstack(comptime callstack: bool, pool_name: [:0]const u8, parent_allocator: std.mem.Allocator) TracingAllocatorInternal(callstack, true) {
     return .{
         .parent_allocator = parent_allocator,
         .pool_name = pool_name,
