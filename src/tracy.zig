@@ -44,3 +44,7 @@ pub const announceLockable = lock.announceLockable;
 pub const announceLockableRaw = lock.announceLockableRaw;
 pub const LockableContext = lock.LockableContext;
 pub const WrappedLock = lock.WrappedLock;
+
+const fiber = @import("fiber.zig");
+pub const fiberEnter = fiber.fiberEnter;
+pub const fiberLeave = fiber.fiberLeave;
