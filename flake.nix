@@ -8,12 +8,23 @@
 
     zls-flake.url = "github:zigtools/zls";
     zls-flake.inputs.nixpkgs.follows = "nixpkgs";
-
-    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, zig-overlay, flake-utils, zls-flake }:
-  flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, nixpkgs, zig-overlay, zls-flake }: let
+    inherit (nixpkgs) lib;
+
+    # flake-utils polyfill
+    eachSystem = systems: fn:
+      lib.foldl' (
+        acc: system:
+          lib.recursiveUpdate
+          acc
+          (lib.mapAttrs (_: value: {${system} = value;}) (fn system))
+      ) {}
+      systems;
+
+    systems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
+  in eachSystem systems (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
         zls = zls-flake.packages.${system}.zls;
