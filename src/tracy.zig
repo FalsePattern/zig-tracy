@@ -2,6 +2,7 @@ const core = @import("core.zig");
 pub const setThreadName = core.setThreadName;
 pub const startupProfiler = core.startupProfiler;
 pub const shutdownProfiler = core.shutdownProfiler;
+pub const profilerStarted = core.profilerStarted;
 pub const isConnected = core.isConnected;
 
 const frame = @import("frame.zig");
