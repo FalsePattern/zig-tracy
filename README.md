@@ -13,11 +13,14 @@ Easy to use bindings for the tracy client C API.
 * Builds and statically links the tracy client - perfect for cross-compilation
 * Uses Zig comptime to nullify the tracy markup when building with tracy disabled
 * Provides Zig friendly bindings for:
-    * Zone markup
-    * Frame markup
-    * Plotting
-    * Message printing
-    * Memory tracing via custom allocator
+  * Zone markup
+  * Frame markup
+  * Plotting
+  * Message printing
+  * GPU tracing
+  * Memory tracing via custom allocator
+  * Lock tracing, both manually and via wrappers
+  * Fiber tracing
 
 ## Usage
 
