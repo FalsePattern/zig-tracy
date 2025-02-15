@@ -44,7 +44,7 @@ pub fn build(b: *std.Build) void {
 
     if (tracy_enable) c.defineCMacro("TRACY_ENABLE", "");
     if (tracy_on_demand) c.defineCMacro("TRACY_ON_DEMAND", "");
-    if (tracy_callstack) |depth| c.defineCMacro("TRACY_CALLSTACK", "\"" ++ digits2(depth) ++ "\"");
+    if (tracy_callstack) |depth| c.defineCMacro("TRACY_CALLSTACK", "\"" ++ std.fmt.digits2(depth) ++ "\"");
     if (tracy_no_callstack) c.defineCMacro("TRACY_NO_CALLSTACK", "");
     if (tracy_no_callstack_inlines) c.defineCMacro("TRACY_NO_CALLSTACK_INLINES", "");
     if (tracy_only_localhost) c.defineCMacro("TRACY_ONLY_LOCALHOST", "");
@@ -136,7 +136,7 @@ pub fn build(b: *std.Build) void {
     if (tracy_on_demand)
         tracy_client_module.addCMacro("TRACY_ON_DEMAND", "");
     if (tracy_callstack) |depth| {
-        tracy_client_module.addCMacro("TRACY_CALLSTACK", "\"" ++ digits2(depth) ++ "\"");
+        tracy_client_module.addCMacro("TRACY_CALLSTACK", "\"" ++ std.fmt.digits2(depth) ++ "\"");
     }
     if (tracy_no_callstack)
         tracy_client_module.addCMacro("TRACY_NO_CALLSTACK", "");
@@ -177,14 +177,6 @@ pub fn build(b: *std.Build) void {
     if (shared and target.result.os.tag == .windows)
         tracy_client_module.addCMacro("TRACY_EXPORTS", "");
     b.installArtifact(tracy_client);
-}
-
-fn digits2(value: usize) [2]u8 {
-    return ("0001020304050607080910111213141516171819" ++
-        "2021222324252627282930313233343536373839" ++
-        "4041424344454647484950515253545556575859" ++
-        "6061626364656667686970717273747576777879" ++
-        "8081828384858687888990919293949596979899")[value * 2 ..][0..2].*;
 }
 
 const tracy_header_files = [_][]const u8{
