@@ -4,6 +4,19 @@ const c = @import("c");
 pub const TracySourceLocationData = c.___tracy_source_location_data;
 const options = @import("tracy-options");
 
+pub inline fn createSourceLocation(comptime src: std.builtin.SourceLocation, comptime opts: ZoneOptions) *const TracySourceLocationData {
+    const static = struct {
+        var src_loc = TracySourceLocationData{
+            .name = if (opts.name) |name| name.ptr else null,
+            .function = src.fn_name.ptr,
+            .file = src.file,
+            .line = src.line,
+            .color = opts.color orelse 0,
+        };
+    };
+    return &static.src_loc;
+}
+
 pub const ZoneOptions = struct {
     active: bool = true,
     name: ?[]const u8 = null,
@@ -48,19 +61,10 @@ pub const ZoneContext = if (options.tracy_enable) extern struct {
 pub inline fn initZone(comptime src: std.builtin.SourceLocation, comptime opts: ZoneOptions) ZoneContext {
     if (!options.tracy_enable) return .{};
 
-    const static = struct {
-        var src_loc = TracySourceLocationData{
-            .name = if (opts.name) |name| name.ptr else null,
-            .function = src.fn_name.ptr,
-            .file = src.file,
-            .line = src.line,
-            .color = opts.color orelse 0,
-        };
-    };
-
-    return initZoneRaw(&static.src_loc, opts.active);
+    return initZoneRaw(createSourceLocation(src, opts), opts.active);
 }
 
+/// src_loc MUST NOT be deallocated!
 pub inline fn initZoneRaw(src_loc: *const TracySourceLocationData, b_active: bool) ZoneContext {
     if (!options.tracy_enable) return .{};
     const active: c_int = @intFromBool(b_active);

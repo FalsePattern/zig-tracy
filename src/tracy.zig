@@ -37,3 +37,9 @@ pub const allocSrcLoc = gpu.allocSrcLoc;
 pub const GPU = gpu.GPU;
 
 pub const TracingAllocator = @import("allocator.zig");
+
+const lock = @import("lock.zig");
+pub const announceLockable = lock.announceLockable;
+pub const announceLockableRaw = lock.announceLockableRaw;
+pub const LockableContext = lock.LockableContext;
+pub const WrappedLock = lock.WrappedLock;

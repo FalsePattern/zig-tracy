@@ -7,7 +7,13 @@ fn handleSigInt(_: c_int) callconv(.C) void {
     finalise_threads.store(true, .release);
 }
 
+const WrappedMutex = tracy.WrappedLock(std.Thread.Mutex);
+var mutex: WrappedMutex = undefined;
 pub fn main() !void {
+    mutex = try WrappedMutex.init(.{}, @src(), .{
+        .name = "Mutex",
+    });
+    defer mutex.deinit();
     tracy.setThreadName("Main");
     defer tracy.message("Graceful main thread exit");
 
@@ -25,7 +31,11 @@ pub fn main() !void {
 
         const zone = tracy.initZone(@src(), .{ .name = "Important work" });
         defer zone.deinit();
-        std.time.sleep(100);
+        mutex.lock();
+        mutex.context.mark(@src(), .{});
+        std.time.sleep(30 * std.time.ns_per_ms);
+        mutex.unlock();
+        std.time.sleep(5 * std.time.ns_per_ms);
     }
 }
 
@@ -55,6 +65,10 @@ fn otherThread() void {
         const stream_zone = tracy.initZone(@src(), .{ .name = "Writer.streamUntilDelimiter" });
         stdin.streamUntilDelimiter(stack.writer(), '\n', null) catch break;
         stream_zone.deinit();
+        mutex.lock();
+        mutex.context.mark(@src(), .{});
+        std.time.sleep(15 * std.time.ns_per_ms);
+        mutex.unlock();
 
         const toowned_zone = tracy.initZone(@src(), .{ .name = "ArrayList.toOwnedSlice" });
         const str = stack.toOwnedSlice() catch break;
