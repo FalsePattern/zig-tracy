@@ -1,7 +1,14 @@
 .{
-    .name = "zig-tracy",
+    .name = .tracy,
     .version = "0.0.4",
-    .minimum_zig_version = "0.14.0-dev.3219+bffbc918e",
+    .fingerprint = 0x255a89ee64e37f38, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.14.0",
+    .dependencies = .{
+        .tracy_src = .{
+            .url = "https://github.com/wolfpld/tracy/archive/refs/tags/v0.11.1.tar.gz",
+            .hash = "122022a478dccaed1309fb5d022f4041eec45d40c93a855ed24fad970774c2426d91"
+        },
+    },
     .paths = .{
         "build.zig",
         "build.zig.zon",
@@ -9,11 +16,5 @@
         "example",
         "README.md",
         "LICENSE",
-    },
-    .dependencies = .{
-        .tracy_src = .{
-            .url = "https://github.com/wolfpld/tracy/archive/refs/tags/v0.11.1.tar.gz",
-            .hash = "122022a478dccaed1309fb5d022f4041eec45d40c93a855ed24fad970774c2426d91"
-        },
     },
 }
